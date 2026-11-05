@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-pink-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toma de Decisiones Bajo Incertidumbre - C10 Pink Edition</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        pinky: {
+                            50: '#fdf2f8',
+                            100: '#fce7f3',
+                            200: '#fbcfe8',
+                            300: '#f472b6',
+                            400: '#e879f9',
+                            500: '#ec4899',
+                            600: '#db2777',
+                            700: '#be185d',
+                            800: '#9d174d',
+                            900: '#831843',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(251, 207, 232, 0.6);
+        }
+        .tab-btn-active {
+            background-color: #db2777;
+            color: #ffffff;
+            box-shadow: 0 4px 14px 0 rgba(219, 39, 119, 0.35);
+        }
+        .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #fce7f3; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #f472b6; border-radius: 9999px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #db2777; }
+    </style>
+</head>
+<body class="h-full text-slate-800 flex flex-col bg-gradient-to-br from-pink-100 via-purple-50 to-pink-50 min-h-screen">
+
+    <!-- Header Section -->
+    <header class="bg-white/80 backdrop-blur-md border-b border-pink-200 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="p-2.5 bg-gradient-to-tr from-pink-500 to-rose-400 text-white rounded-2xl shadow-md shadow-pink-300">
+                    <i data-lucide="sparkles" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg sm:text-xl font-extrabold text-pink-900 tracking-tight">Toma de Decisiones bajo Incertidumbre</h1>
+                    <p class="text-xs font-semibold text-pink-600">Grado 10 - Término 1 | Práctica C10 (Edición Rosa)</p>
+                </div>
+            </div>
+
+            <!-- Ejemplos Precargados -->
+            <div class="flex items-center gap-2 bg-pink-50/80 p-1.5 rounded-2xl border border-pink-200 shadow-inner">
+                <i data-lucide="folder-heart" class="w-4 h-4 text-pink-600 ml-2"></i>
+                <span class="text-xs font-bold text-pink-700">Ejemplos:</span>
+                <button onclick="loadExample('ex1')" class="px-3 py-1.5 bg-white hover:bg-pink-100 text-pink-700 rounded-xl text-xs font-bold border border-pink-200 transition shadow-sm">
+                    📱 Lanzamiento de App
+                </button>
+                <button onclick="loadExample('ex2')" class="px-3 py-1.5 bg-white hover:bg-pink-100 text-pink-700 rounded-xl text-xs font-bold border border-pink-200 transition shadow-sm">
+                    ☕ Expansión de Cafetería
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col gap-6">
+
+        <!-- Navigation Tabs -->
+        <div class="flex overflow-x-auto custom-scrollbar gap-2 p-1.5 bg-white/70 backdrop-blur-md border border-pink-200 rounded-2xl shadow-sm">
+            <button onclick="switchTab('matrix')" id="tab-btn-matrix" class="tab-btn tab-btn-active py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition whitespace-nowrap">
+                <i data-lucide="table" class="w-4 h-4"></i> 1. Matriz & Probabilidades
+            </button>
+            <button onclick="switchTab('criteria')" id="tab-btn-criteria" class="tab-btn text-pink-800 hover:bg-pink-100 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition whitespace-nowrap">
+                <i data-lucide="award" class="w-4 h-4"></i> 2. Criterios de Decisión
+            </button>
+            <button onclick="switchTab('regret')" id="tab-btn-regret" class="tab-btn text-pink-800 hover:bg-pink-100 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition whitespace-nowrap">
+                <i data-lucide="heart-crack" class="w-4 h-4"></i> 3. Matriz de Arrepentimiento
+            </button>
+            <button onclick="switchTab('filtering')" id="tab-btn-filtering" class="tab-btn text-pink-800 hover:bg-pink-100 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition whitespace-nowrap">
+                <i data-lucide="filter" class="w-4 h-4"></i> 4. Filtrado por Etapas & Diagrama
+            </button>
+            <button onclick="switchTab('record')" id="tab-btn-record" class="tab-btn text-pink-800 hover:bg-pink-100 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition whitespace-nowrap">
+                <i data-lucide="bot" class="w-4 h-4"></i> 5. Registro IA (C10)
+            </button>
+        </div>
+
+        <!-- TAB 1: MATRIZ Y PROBABILIDADES -->
+        <section id="tab-matrix" class="tab-content flex flex-col gap-6">
+            <div class="glass-card rounded-3xl p-6 shadow-sm">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <div>
+                        <h2 class="text-xl font-extrabold text-pink-900 flex items-center gap-2">
+                            Matriz de Recompensas y Pagos
+                        </h2>
+                        <p class="text-xs font-medium text-pink-600 mt-0.5">Agrega o elimina alternativas y estados de la naturaleza. Los resultados se actualizan automáticamente.</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="addAlternative()" class="bg-pink-600 hover:bg-pink-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md shadow-pink-200 transition">
+                            <i data-lucide="plus-circle" class="w-4 h-4"></i> Alternativa
+                        </button>
+                        <button onclick="addState()" class="bg-purple-600 hover:bg-purple-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md shadow-purple-200 transition">
+                            <i data-lucide="plus-circle" class="w-4 h-4"></i> Estado
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tabla Interactiva -->
+                <div class="overflow-x-auto custom-scrollbar border border-pink-200 rounded-2xl bg-white/90">
+                    <table class="w-full text-sm text-left border-collapse">
+                        <thead id="matrixHead" class="bg-pink-100/70 text-pink-900 font-extrabold text-xs uppercase border-b border-pink-200">
+                            <!-- JS dinamico -->
+                        </thead>
+                        <tbody id="matrixBody" class="divide-y divide-pink-100 bg-white/50">
+                            <!-- JS dinamico -->
+                        </tbody>
+                        <tfoot id="matrixFoot" class="bg-pink-50/80 border-t-2 border-pink-200 font-bold">
+                            <!-- JS dinamico -->
+                        </tfoot>
+                    </table>
+                </div>
+
+                <!-- Estado de Probabilidades -->
+                <div id="probAlert" class="mt-4 p-3.5 rounded-2xl flex items-center justify-between text-xs font-bold transition shadow-inner">
+                    <!-- JS dinamico -->
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: CRITERIOS DE DECISIÓN -->
+        <section id="tab-criteria" class="tab-content hidden flex-col gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <!-- Maximax -->
+                <div class="glass-card rounded-3xl p-6 flex flex-col justify-between border-t-4 border-t-pink-500 shadow-sm">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="px-3 py-1 bg-pink-100 text-pink-700 rounded-full text-xs font-extrabold tracking-wide uppercase">Criterio Maximax (Optimista)</span>
+                            <i data-lucide="sun" class="w-5 h-5 text-pink-500"></i>
+                        </div>
+                        <p class="text-xs font-medium text-slate-600 mt-1">Busca el mejor resultado posible entre todos los escenarios (Máximo de los Máximos).</p>
+                        
+                        <div class="mt-4 p-4 bg-pink-50/60 rounded-2xl border border-pink-100">
+                            <span class="text-xs font-bold text-pink-700 block">Mejor Valor Obtenido:</span>
+                            <span id="maximax-value" class="text-2xl font-black text-pink-900">-</span>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-pink-100">
+                        <span class="text-xs font-bold text-slate-500 block uppercase">Alternativa(s) Ganadora(s):</span>
+                        <div id="maximax-rec" class="text-base font-extrabold text-pink-700 mt-1">-</div>
+                    </div>
+                </div>
+
+                <!-- Maximin -->
+                <div class="glass-card rounded-3xl p-6 flex flex-col justify-between border-t-4 border-t-purple-500 shadow-sm">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-extrabold tracking-wide uppercase">Criterio Maximin (Pesimista / Conservador)</span>
+                            <i data-lucide="shield-check" class="w-5 h-5 text-purple-500"></i>
+                        </div>
+                        <p class="text-xs font-medium text-slate-600 mt-1">Garantiza el mejor de los peores resultados posibles (Máximo de los Mínimos).</p>
+                        
+                        <div class="mt-4 p-4 bg-purple-50/60 rounded-2xl border border-purple-100">
+                            <span class="text-xs font-bold text-purple-700 block">Valor Mínimo Maximizado:</span>
+                            <span id="maximin-value" class="text-2xl font-black text-purple-900">-</span>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-pink-100">
+                        <span class="text-xs font-bold text-slate-500 block uppercase">Alternativa(s) Ganadora(s):</span>
+                        <div id="maximin-rec" class="text-base font-extrabold text-purple-700 mt-1">-</div>
+                    </div>
+                </div>
+
+                <!-- Minimax Regret -->
+                <div class="glass-card rounded-3xl p-6 flex flex-col justify-between border-t-4 border-t-rose-500 shadow-sm">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="px-3 py-1 bg-rose-100 text-rose-700 rounded-full text-xs font-extrabold tracking-wide uppercase">Minimax Regret (Savage)</span>
+                            <i data-lucide="heart-crack" class="w-5 h-5 text-rose-500"></i>
+                        </div>
+                        <p class="text-xs font-medium text-slate-600 mt-1">Minimiza el arrepentimiento o pérdida de oportunidad máxima por no elegir la mejor opción.</p>
+                        
+                        <div class="mt-4 p-4 bg-rose-50/60 rounded-2xl border border-rose-100">
+                            <span class="text-xs font-bold text-rose-700 block">Arrepentimiento Máximo Minimizado:</span>
+                            <span id="minimax-value" class="text-2xl font-black text-rose-900">-</span>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-pink-100">
+                        <span class="text-xs font-bold text-slate-500 block uppercase">Alternativa(s) Ganadora(s):</span>
+                        <div id="minimax-rec" class="text-base font-extrabold text-rose-700 mt-1">-</div>
+                    </div>
+                </div>
+
+                <!-- EMV / Bayes -->
+                <div class="glass-card rounded-3xl p-6 flex flex-col justify-between border-t-4 border-t-fuchsia-500 shadow-sm">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="px-3 py-1 bg-fuchsia-100 text-fuchsia-700 rounded-full text-xs font-extrabold tracking-wide uppercase">Valor Monetario Esperado (EMV / Bayes)</span>
+                            <i data-lucide="calculator" class="w-5 h-5 text-fuchsia-500"></i>
+                        </div>
+                        <p class="text-xs font-medium text-slate-600 mt-1">Suma el promedio ponderado de los beneficios según la probabilidad de cada estado.</p>
+                        
+                        <div class="mt-4 p-4 bg-fuchsia-50/60 rounded-2xl border border-fuchsia-100">
+                            <span class="text-xs font-bold text-fuchsia-700 block">Mayor Valor Monetario Esperado:</span>
+                            <span id="emv-value" class="text-2xl font-black text-fuchsia-900">-</span>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-pink-100">
+                        <span class="text-xs font-bold text-slate-500 block uppercase">Alternativa(s) Ganadora(s):</span>
+                        <div id="emv-rec" class="text-base font-extrabold text-fuchsia-700 mt-1">-</div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Tabla Resumen -->
+            <div class="glass-card rounded-3xl p-6 shadow-sm mt-2">
+                <h3 class="text-base font-extrabold text-pink-900 mb-4 flex items-center gap-2">
+                    <i data-lucide="layers" class="w-5 h-5 text-pink-600"></i> Tabla Comparativa General
+                </h3>
+                <div class="overflow-x-auto custom-scrollbar border border-pink-200 rounded-2xl">
+                    <table class="w-full text-sm text-left border-collapse">
+                        <thead class="bg-pink-100/80 text-pink-900 text-xs uppercase font-extrabold">
+                            <tr>
+                                <th class="p-3.5">Alternativa</th>
+                                <th class="p-3.5 text-center">Maximax</th>
+                                <th class="p-3.5 text-center">Maximin</th>
+                                <th class="p-3.5 text-center">Máx. Arrepentimiento</th>
+                                <th class="p-3.5 text-center bg-pink-200/50">EMV (Bayes)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="summaryTableBody" class="divide-y divide-pink-100 text-xs bg-white/70">
+                            <!-- JS dinamico -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: MATRIZ DE ARREPENTIMIENTO -->
+        <section id="tab-regret" class="tab-content hidden flex-col gap-6">
+            <div class="glass-card rounded-3xl p-6 shadow-sm">
+                <div class="mb-5">
+                    <h2 class="text-xl font-extrabold text-pink-900">Matriz de Pérdida de Oportunidad (Regret Matrix)</h2>
+                    <p class="text-xs font-medium text-pink-600 mt-1">Muestra la diferencia entre el beneficio obtenido y el beneficio máximo que se pudo haber logrado en cada estado de la naturaleza.</p>
+                </div>
+                
+                <div class="overflow-x-auto custom-scrollbar border border-pink-200 rounded-2xl bg-white/90">
+                    <table class="w-full text-sm text-left border-collapse">
+                        <thead id="regretHead" class="bg-pink-100 text-pink-900 font-extrabold text-xs uppercase border-b border-pink-200">
+                            <!-- JS dinamico -->
+                        </thead>
+                        <tbody id="regretBody" class="divide-y divide-pink-100 bg-white/60">
+                            <!-- JS dinamico -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: FILTRADO POR ETAPAS Y DIAGRAMA DE FLUJO -->
+        <section id="tab-filtering" class="tab-content hidden flex-col gap-6">
+            <div class="glass-card rounded-3xl p-6 shadow-sm">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <div>
+                        <h2 class="text-xl font-extrabold text-pink-900">Filtrado Secuencial por Etapas (Staged Filtering)</h2>
+                        <p class="text-xs font-medium text-pink-600 mt-0.5">Define filtros consecutivos con umbrales mínimos para descartar alternativas hasta quedarte con la óptima.</p>
+                    </div>
+                    <button onclick="addFilterStage()" class="bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md shadow-pink-200 transition">
+                        <i data-lucide="plus" class="w-4 h-4"></i> Agregar Etapa de Filtro
+                    </button>
+                </div>
+
+                <!-- Configuración de Etapas -->
+                <div id="stagesContainer" class="flex flex-col gap-3 mb-6">
+                    <!-- JS dinamico -->
+                </div>
+
+                <div class="pt-6 border-t border-pink-200">
+                    <h3 class="text-base font-extrabold text-pink-900 mb-4 flex items-center gap-2">
+                        <i data-lucide="git-branch" class="w-5 h-5 text-pink-600"></i> Diagrama de Flujo del Filtrado
+                    </h3>
+                    
+                    <!-- Diagrama de Flujo Dinámico SVG -->
+                    <div id="flowchartCanvas" class="bg-white/80 border border-pink-200 rounded-3xl p-6 min-h-[320px] flex flex-col items-center justify-center gap-4 shadow-inner overflow-x-auto custom-scrollbar">
+                        <!-- JS Renderizado -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 5: REGISTRO DE DESARROLLO IA -->
+        <section id="tab-record" class="tab-content hidden flex-col gap-6">
+            <div class="glass-card rounded-3xl p-8 shadow-sm">
+                <div class="flex items-center gap-4 mb-6">
+                    <div class="p-3 bg-gradient-to-tr from-pink-500 to-purple-600 text-white rounded-2xl shadow-md">
+                        <i data-lucide="bot" class="w-7 h-7"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-extrabold text-pink-900">Registro de Conversación / Desarrollo con IA</h2>
+                        <p class="text-xs font-bold text-pink-600">Cumplimiento del Requisito 4 del Criterio 10 (C10 Approval)</p>
+                    </div>
+                </div>
+
+                <div class="bg-white/80 border border-pink-200 rounded-2xl p-5 mb-6 text-xs text-slate-700 leading-relaxed space-y-3">
+                    <p class="font-semibold text-pink-900">
+                        Esta aplicación fue creada interactivamente en colaboración con inteligencia artificial para la práctica de Economía y Toma de Decisiones (Grado 10, Término 1).
+                    </p>
+                    <p>
+                        Todo el código HTML, la lógica matemática de la matriz de arrepentimiento, el filtrado por etapas y los gráficos de flujo fueron generados y depurados siguiendo los lineamientos de evaluación.
+                    </p>
+                </div>
+
+                <!-- Enlace visible y requerido al registro de la IA -->
+                <div class="p-4 bg-gradient-to-r from-pink-500 to-rose-500 rounded-2xl text-white shadow-lg shadow-pink-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="link-2" class="w-6 h-6 text-pink-100"></i>
+                        <div>
+                            <span class="text-xs font-bold text-pink-100 block uppercase tracking-wider">Enlace del Desarrollo IA</span>
+                            <span class="text-sm font-extrabold">Registro Público de Conversación de Inteligencia Artificial</span>
+                        </div>
+                    </div>
+                    <a href="https://github.com/nolopez338/global_economics" target="_blank" rel="noopener noreferrer" class="px-5 py-2.5 bg-white text-pink-700 hover:bg-pink-50 font-extrabold text-xs rounded-xl transition flex items-center gap-2 shadow-sm whitespace-nowrap">
+                        <span>Ver Registro en GitHub</span>
+                        <i data-lucide="external-link" class="w-4 h-4"></i>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white/70 backdrop-blur-md border-t border-pink-200 py-4 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs font-bold text-pink-700">
+            🌸 Grade 10 Economics & Decision Making | Práctica Interactivas de Decisión C10
+        </div>
+    </footer>
+
+    <!-- JS LOGIC -->
+    <script>
+        // Data Principal State
+        let stateData = {
+            alternatives: ["Lanzar App Pro", "Lanzar App Freemium", "Lanzar Versión Web"],
+            states: ["Éxito en Mercado", "Aceptación Media", "Baja Adopción"],
+            probabilities: [0.35, 0.45, 0.20],
+            payoffs: [
+                [200, 90, -40], // Alt 1
+                [140, 80, 10],  // Alt 2
+                [70, 50, 30]    // Alt 3
+            ],
+            filterStages: [
+                { id: 1, criterion: 'maximin', threshold: 0, enabled: true },
+                { id: 2, criterion: 'emv', threshold: 70, enabled: true }
+            ]
+        };
+
+        // Ejemplos Precargados
+        const preloadedExamples = {
+            ex1: {
+                alternatives: ["Lanzar App Pro", "Lanzar App Freemium", "Lanzar Versión Web"],
+                states: ["Éxito en Mercado", "Aceptación Media", "Baja Adopción"],
+                probabilities: [0.35, 0.45, 0.20],
+                payoffs: [
+                    [200, 90, -40],
+                    [140, 80, 10],
+                    [70, 50, 30]
+                ],
+                filterStages: [
+                    { id: 1, criterion: 'maximin', threshold: 0, enabled: true },
+                    { id: 2, criterion: 'emv', threshold: 70, enabled: true }
+                ]
+            },
+            ex2: {
+                alternatives: ["Abrir Nueva Sede", "Renovar Local Actual", "Servicio a Domicilio"],
+                states: ["Crecimiento Económico", "Estabilidad", "Recesión Local"],
+                probabilities: [0.40, 0.40, 0.20],
+                payoffs: [
+                    [300, 120, -80],
+                    [150, 90, 20],
+                    [80, 60, 40]
+                ],
+                filterStages: [
+                    { id: 1, criterion: 'minimax', threshold: 100, enabled: true },
+                    { id: 2, criterion: 'emv', threshold: 80, enabled: true }
+                ]
+            }
+        };
+
+        // Cambio de Pestañas
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => {
+                el.classList.add('hidden');
+                el.classList.remove('flex');
+            });
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('tab-btn-active');
+                btn.classList.add('text-pink-800');
+            });
+
+            const activeTab = document.getElementById(`tab-${tabId}`);
+            activeTab.classList.remove('hidden');
+            activeTab.classList.add('flex');
+
+            const activeBtn = document.getElementById(`tab-btn-${tabId}`);
+            activeBtn.classList.add('tab-btn-active');
+            activeBtn.classList.remove('text-pink-800');
+
+            if (tabId === 'filtering') {
+                renderFlowchart();
+            }
+        }
+
+        // Cargar Ejemplos
+        function loadExample(key) {
+            if (preloadedExamples[key]) {
+                stateData = JSON.parse(JSON.stringify(preloadedExamples[key]));
+                renderAll();
+            }
+        }
+
+        // Modificar Estructura de la Matriz
+        function addAlternative() {
+            const count = stateData.alternatives.length + 1;
+            stateData.alternatives.push(`Alternativa ${count}`);
+            stateData.payoffs.push(new Array(stateData.states.length).fill(0));
+            renderAll();
+        }
+
+        function removeAlternative(index) {
+            if (stateData.alternatives.length <= 1) return;
+            stateData.alternatives.splice(index, 1);
+            stateData.payoffs.splice(index, 1);
+            renderAll();
+        }
+
+        function addState() {
+            const count = stateData.states.length + 1;
+            stateData.states.push(`Estado ${count}`);
+            const equalProb = Number((1 / stateData.states.length).toFixed(2));
+            stateData.probabilities = new Array(stateData.states.length).fill(equalProb);
+            stateData.payoffs.forEach(row => row.push(0));
+            renderAll();
+        }
+
+        function removeState(index) {
+            if (stateData.states.length <= 1) return;
+            stateData.states.splice(index, 1);
+            stateData.probabilities.splice(index, 1);
+            stateData.payoffs.forEach(row => row.splice(index, 1));
+            renderAll();
+        }
+
+        function updatePayoff(altIdx, stateIdx, val) {
+            stateData.payoffs[altIdx][stateIdx] = parseFloat(val) || 0;
+            renderCalculations();
+        }
+
+        function updateProbability(stateIdx, val) {
+            stateData.probabilities[stateIdx] = parseFloat(val) || 0;
+            renderCalculations();
+        }
+
+        function updateAltName(idx, val) {
+            stateData.alternatives[idx] = val;
+            renderCalculations();
+        }
+
+        function updateStateName(idx, val) {
+            stateData.states[idx] = val;
+            renderCalculations();
+        }
+
+        // Cálculos Matemáticos
+        function calculateResults() {
+            const alts = stateData.alternatives;
+            const states = stateData.states;
+            const payoffs = stateData.payoffs;
+            const probs = stateData.probabilities;
+
+            const maximaxValues = payoffs.map(row => Math.max(...row));
+            const maximinValues = payoffs.map(row => Math.min(...row));
+
+            const globalMaximax = Math.max(...maximaxValues);
+            const globalMaximin = Math.max(...maximinValues);
+
+            const maximaxRecs = alts.filter((_, idx) => maximaxValues[idx] === globalMaximax);
+            const maximinRecs = alts.filter((_, idx) => maximinValues[idx] === globalMaximin);
+
+            // Matriz de Arrepentimiento
+            const colMax = states.map((_, colIdx) => Math.max(...payoffs.map(row => row[colIdx])));
+            const regretMatrix = payoffs.map(row => 
+                row.map((val, colIdx) => colMax[colIdx] - val)
+            );
+
+            const maxRegretValues = regretMatrix.map(row => Math.max(...row));
+            const globalMinimaxRegret = Math.min(...maxRegretValues);
+            const minimaxRecs = alts.filter((_, idx) => maxRegretValues[idx] === globalMinimaxRegret);
+
+            // EMV / Bayes
+            const emvValues = payoffs.map(row => 
+                row.reduce((sum, val, colIdx) => sum + (val * (probs[colIdx] || 0)), 0)
+            );
+            const globalMaxEMV = Math.max(...emvValues);
+            const emvRecs = alts.filter((_, idx) => Math.abs(emvValues[idx] - globalMaxEMV) < 0.0001);
+
+            return {
+                maximaxValues, globalMaximax, maximaxRecs,
+                maximinValues, globalMaximin, maximinRecs,
+                regretMatrix, maxRegretValues, globalMinimaxRegret, minimaxRecs,
+                emvValues, globalMaxEMV, emvRecs
+            };
+        }
+
+        // Renderizado de Tabla Matriz
+        function renderMatrix() {
+            const head = document.getElementById('matrixHead');
+            const body = document.getElementById('matrixBody');
+            const foot = document.getElementById('matrixFoot');
+
+            let headHTML = `<tr><th class="p-3 border-b border-pink-200 text-pink-900">Alternativa</th>`;
+            stateData.states.forEach((state, sIdx) => {
+                headHTML += `
+                <th class="p-2 border-b border-pink-200 min-w-[140px]">
+                    <div class="flex items-center justify-between gap-1">
+                        <input type="text" value="${state}" onchange="updateStateName(${sIdx}, this.value)" class="w-full bg-transparent font-bold text-pink-900 border-b border-transparent hover:border-pink-300 focus:border-pink-500 px-1 py-0.5 outline-none rounded">
+                        <button onclick="removeState(${sIdx})" class="text-pink-400 hover:text-rose-600 transition p-1">
+                            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+                </th>`;
+            });
+            headHTML += `<th class="p-3 border-b border-pink-200 text-center w-12">Acción</th></tr>`;
+            head.innerHTML = headHTML;
+
+            let bodyHTML = '';
+            stateData.alternatives.forEach((alt, aIdx) => {
+                bodyHTML += `<tr>
+                    <td class="p-2 font-bold text-slate-700 min-w-[180px]">
+                        <input type="text" value="${alt}" onchange="updateAltName(${aIdx}, this.value)" class="w-full bg-transparent border-b border-transparent hover:border-pink-300 focus:border-pink-500 px-1.5 py-1 outline-none rounded text-xs font-bold text-slate-800">
+                    </td>`;
+                stateData.states.forEach((_, sIdx) => {
+                    const val = stateData.payoffs[aIdx][sIdx];
+                    bodyHTML += `
+                    <td class="p-2">
+                        <input type="number" step="any" value="${val}" onchange="updatePayoff(${aIdx}, ${sIdx}, this.value)" class="w-full bg-pink-50/50 border border-pink-200 focus:border-pink-500 focus:bg-white rounded-xl px-2 py-1 text-xs font-mono font-bold text-right outline-none">
+                    </td>`;
+                });
+                bodyHTML += `
+                <td class="p-2 text-center">
+                    <button onclick="removeAlternative(${aIdx})" class="text-pink-400 hover:text-rose-600 transition p-1">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                </td>
+                </tr>`;
+            });
+            body.innerHTML = bodyHTML;
+
+            let footHTML = `<tr><td class="p-3 text-xs font-black text-pink-800 uppercase">Probabilidad P(S)</td>`;
+            stateData.states.forEach((_, sIdx) => {
+                const prob = stateData.probabilities[sIdx] !== undefined ? stateData.probabilities[sIdx] : 0;
+                footHTML += `
+                <td class="p-2">
+                    <input type="number" step="0.01" min="0" max="1" value="${prob}" onchange="updateProbability(${sIdx}, this.value)" class="w-full bg-purple-50 border border-purple-200 focus:border-purple-500 rounded-xl px-2 py-1 text-xs font-mono font-bold text-purple-900 text-right outline-none">
+                </td>`;
+            });
+            footHTML += `<td class="p-3"></td></tr>`;
+            foot.innerHTML = footHTML;
+
+            lucide.createIcons();
+        }
+
+        // Renderizado de Resultados
+        function renderCalculations() {
+            const results = calculateResults();
+
+            const probSum = stateData.probabilities.reduce((a, b) => a + b, 0);
+            const probAlert = document.getElementById('probAlert');
+            if (Math.abs(probSum - 1.0) > 0.01) {
+                probAlert.className = "mt-4 p-3.5 rounded-2xl flex items-center justify-between text-xs font-bold bg-amber-100 border border-amber-300 text-amber-900 shadow-inner";
+                probAlert.innerHTML = `<span class="flex items-center gap-2"><i data-lucide="alert-triangle" class="w-4 h-4 text-amber-600"></i> La suma de probabilidades es ${probSum.toFixed(2)} (debe ser 1.00).</span>`;
+            } else {
+                probAlert.className = "mt-4 p-3.5 rounded-2xl flex items-center justify-between text-xs font-bold bg-emerald-100 border border-emerald-300 text-emerald-900 shadow-inner";
+                probAlert.innerHTML = `<span class="flex items-center gap-2"><i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i> Suma de probabilidades válida (1.00)</span>`;
+            }
+
+            document.getElementById('maximax-value').innerText = results.globalMaximax.toFixed(2);
+            document.getElementById('maximax-rec').innerText = results.maximaxRecs.join(', ') + (results.maximaxRecs.length > 1 ? ' (Empate)' : '');
+
+            document.getElementById('maximin-value').innerText = results.globalMaximin.toFixed(2);
+            document.getElementById('maximin-rec').innerText = results.maximinRecs.join(', ') + (results.maximinRecs.length > 1 ? ' (Empate)' : '');
+
+            document.getElementById('minimax-value').innerText = results.globalMinimaxRegret.toFixed(2);
+            document.getElementById('minimax-rec').innerText = results.minimaxRecs.join(', ') + (results.minimaxRecs.length > 1 ? ' (Empate)' : '');
+
+            document.getElementById('emv-value').innerText = results.globalMaxEMV.toFixed(2);
+            document.getElementById('emv-rec').innerText = results.emvRecs.join(', ') + (results.emvRecs.length > 1 ? ' (Empate)' : '');
+
+            // Resumen
+            const summaryBody = document.getElementById('summaryTableBody');
+            let summaryHTML = '';
+            stateData.alternatives.forEach((alt, idx) => {
+                summaryHTML += `
+                <tr class="hover:bg-pink-50/50">
+                    <td class="p-3.5 font-bold text-pink-950">${alt}</td>
+                    <td class="p-3.5 text-center font-mono font-semibold">${results.maximaxValues[idx].toFixed(2)}</td>
+                    <td class="p-3.5 text-center font-mono font-semibold">${results.maximinValues[idx].toFixed(2)}</td>
+                    <td class="p-3.5 text-center font-mono font-semibold">${results.maxRegretValues[idx].toFixed(2)}</td>
+                    <td class="p-3.5 text-center font-mono font-black text-pink-700 bg-pink-50/50">${results.emvValues[idx].toFixed(2)}</td>
+                </tr>`;
+            });
+            summaryBody.innerHTML = summaryHTML;
+
+            renderRegretMatrix(results.regretMatrix);
+            renderFlowchart();
+            lucide.createIcons();
+        }
+
+        // Renderizado de la Matriz de Arrepentimiento
+        function renderRegretMatrix(regretMatrix) {
+            const head = document.getElementById('regretHead');
+            const body = document.getElementById('regretBody');
+
+            let headHTML = `<tr><th class="p-3 border-b border-pink-200">Alternativa</th>`;
+            stateData.states.forEach(st => {
+                headHTML += `<th class="p-3 text-center border-b border-pink-200">${st}</th>`;
+            });
+            headHTML += `<th class="p-3 text-center bg-rose-100 text-rose-900 border-b border-pink-200">Máx. Arrepentimiento</th></tr>`;
+            head.innerHTML = headHTML;
+
+            let bodyHTML = '';
+            stateData.alternatives.forEach((alt, aIdx) => {
+                const maxReg = Math.max(...regretMatrix[aIdx]);
+                bodyHTML += `<tr>
+                    <td class="p-3 font-bold text-slate-800">${alt}</td>`;
+                regretMatrix[aIdx].forEach(val => {
+                    bodyHTML += `<td class="p-3 text-center font-mono text-slate-700">${val.toFixed(2)}</td>`;
+                });
+                bodyHTML += `<td class="p-3 text-center font-mono font-extrabold text-rose-700 bg-rose-50/60">${maxReg.toFixed(2)}</td></tr>`;
+            });
+            body.innerHTML = bodyHTML;
+        }
+
+        // Funciones de Filtrado
+        function addFilterStage() {
+            stateData.filterStages.push({
+                id: Date.now(),
+                criterion: 'maximin',
+                threshold: 0,
+                enabled: true
+            });
+            renderFilterStages();
+            renderFlowchart();
+        }
+
+        function removeFilterStage(id) {
+            stateData.filterStages = stateData.filterStages.filter(s => s.id !== id);
+            renderFilterStages();
+            renderFlowchart();
+        }
+
+        function updateStage(id, key, val) {
+            const stage = stateData.filterStages.find(s => s.id === id);
+            if (stage) {
+                stage[key] = key === 'threshold' ? parseFloat(val) || 0 : val;
+                renderFlowchart();
+            }
+        }
+
+        function renderFilterStages() {
+            const container = document.getElementById('stagesContainer');
+            if (stateData.filterStages.length === 0) {
+                container.innerHTML = `<div class="p-4 text-center text-xs font-bold text-pink-400 bg-pink-50/50 rounded-2xl border border-dashed border-pink-200">No hay etapas activas. Haz clic en "Agregar Etapa de Filtro".</div>`;
+                return;
+            }
+
+            let html = '';
+            stateData.filterStages.forEach((stage, sIdx) => {
+                html += `
+                <div class="flex flex-wrap items-center gap-3 p-3.5 bg-white border border-pink-200 rounded-2xl shadow-sm">
+                    <span class="w-7 h-7 flex items-center justify-center bg-pink-600 text-white font-black rounded-xl text-xs shadow-sm">${sIdx + 1}</span>
+                    <div class="flex-1 min-w-[160px]">
+                        <label class="text-[10px] uppercase font-black text-pink-700 block mb-0.5">Criterio</label>
+                        <select onchange="updateStage(${stage.id}, 'criterion', this.value)" class="w-full bg-pink-50/50 border border-pink-200 rounded-xl px-2.5 py-1.5 text-xs font-bold text-pink-900 outline-none focus:border-pink-500">
+                            <option value="maximin" ${stage.criterion === 'maximin' ? 'selected' : ''}>Maximin (Conservador)</option>
+                            <option value="maximax" ${stage.criterion === 'maximax' ? 'selected' : ''}>Maximax (Optimista)</option>
+                            <option value="emv" ${stage.criterion === 'emv' ? 'selected' : ''}>EMV / Bayes (Esperado)</option>
+                            <option value="minimax" ${stage.criterion === 'minimax' ? 'selected' : ''}>Minimax Regret (Arrepentimiento)</option>
+                        </select>
+                    </div>
+                    <div class="w-32">
+                        <label class="text-[10px] uppercase font-black text-pink-700 block mb-0.5">Umbral Requerido</label>
+                        <input type="number" step="any" value="${stage.threshold}" onchange="updateStage(${stage.id}, 'threshold', this.value)" class="w-full bg-pink-50/50 border border-pink-200 rounded-xl px-2.5 py-1.5 text-xs font-mono font-bold outline-none focus:border-pink-500">
+                    </div>
+                    <button onclick="removeFilterStage(${stage.id})" class="mt-3 text-pink-400 hover:text-rose-600 transition p-1">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                </div>`;
+            });
+            container.innerHTML = html;
+            lucide.createIcons();
+        }
+
+        // Diagrama de Flujo del Filtrado
+        function renderFlowchart() {
+            const canvas = document.getElementById('flowchartCanvas');
+            const results = calculateResults();
+
+            let currentAlts = [...stateData.alternatives];
+            let flowchartSteps = [];
+
+            flowchartSteps.push({
+                title: "Inicio: Todas las Alternativas",
+                alts: [...currentAlts],
+                removed: []
+            });
+
+            stateData.filterStages.forEach((stage, idx) => {
+                if (currentAlts.length === 0) return;
+
+                let nextAlts = [];
+                let removedAlts = [];
+
+                currentAlts.forEach(alt => {
+                    const altIdx = stateData.alternatives.indexOf(alt);
+                    let val = 0;
+
+                    if (stage.criterion === 'maximin') val = results.maximinValues[altIdx];
+                    else if (stage.criterion === 'maximax') val = results.maximaxValues[altIdx];
+                    else if (stage.criterion === 'emv') val = results.emvValues[altIdx];
+                    else if (stage.criterion === 'minimax') val = results.maxRegretValues[altIdx];
+
+                    let passes = stage.criterion === 'minimax' ? (val <= stage.threshold) : (val >= stage.threshold);
+
+                    if (passes) {
+                        nextAlts.push(alt);
+                    } else {
+                        removedAlts.push(`${alt} (${val.toFixed(1)})`);
+                    }
+                });
+
+                currentAlts = nextAlts;
+                flowchartSteps.push({
+                    title: `Etapa ${idx + 1}: ${stage.criterion.toUpperCase()} (${stage.criterion === 'minimax' ? '≤' : '≥'} ${stage.threshold})`,
+                    alts: [...currentAlts],
+                    removed: removedAlts
+                });
+            });
+
+            let chartHTML = `<div class="flex flex-col items-center gap-3 w-full max-w-xl">`;
+
+            flowchartSteps.forEach((step, sIdx) => {
+                const isLast = sIdx === flowchartSteps.length - 1;
+
+                chartHTML += `
+                <div class="w-full bg-white border ${isLast ? 'border-pink-500 ring-4 ring-pink-100 shadow-md' : 'border-pink-200'} rounded-2xl p-4 text-center transition">
+                    <div class="text-[11px] font-black uppercase tracking-wider text-pink-700 mb-1.5">${step.title}</div>
+                    <div class="flex flex-wrap gap-2 justify-center mt-2">`;
+                
+                if (step.alts.length === 0) {
+                    chartHTML += `<span class="px-3 py-1 bg-rose-100 text-rose-800 rounded-xl text-xs font-bold">Sin alternativas restantes</span>`;
+                } else {
+                    step.alts.forEach(a => {
+                        chartHTML += `<span class="px-3 py-1 bg-pink-100 text-pink-800 border border-pink-200 rounded-xl text-xs font-bold">${a}</span>`;
+                    });
+                }
+
+                chartHTML += `</div>`;
+
+                if (step.removed && step.removed.length > 0) {
+                    chartHTML += `<div class="text-[11px] text-rose-500 font-bold mt-2">Descartadas: ${step.removed.join(', ')}</div>`;
+                }
+
+                chartHTML += `</div>`;
+
+                if (!isLast) {
+                    chartHTML += `
+                    <div class="flex flex-col items-center">
+                        <i data-lucide="arrow-down-circle" class="w-6 h-6 text-pink-400 my-0.5"></i>
+                    </div>`;
+                }
+            });
+
+            chartHTML += `</div>`;
+            canvas.innerHTML = chartHTML;
+            lucide.createIcons();
+        }
+
+        function renderAll() {
+            renderMatrix();
+            renderCalculations();
+            renderFilterStages();
+        }
+
+        window.onload = function() {
+            renderAll();
+        };
+    </script>
+</body>
+</html>

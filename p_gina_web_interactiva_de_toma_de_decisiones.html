@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toma de Decisiones Bajo Incertidumbre - C10 Practice</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Font Family -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .tab-active { border-bottom: 3px solid #2563eb; color: #2563eb; font-weight: 600; }
+        /* Custom Scrollbar for tables */
+        .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="h-full text-slate-800 flex flex-col">
+
+    <!-- Header Section -->
+    <header class="bg-slate-900 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-blue-600 rounded-lg">
+                    <i data-lucide="brain-circuit" class="w-7 h-7 text-white"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight">Toma de Decisiones Bajo Incertidumbre</h1>
+                    <p class="text-xs text-slate-400">Grado 10 - Término 1 | Práctica C10</p>
+                </div>
+            </div>
+
+            <!-- Preloaded Examples Selector -->
+            <div class="flex items-center gap-2 bg-slate-800 p-1.5 rounded-lg border border-slate-700">
+                <i data-lucide="folder-open" class="w-4 h-4 text-blue-400 ml-2"></i>
+                <label for="exampleSelect" class="text-xs font-medium text-slate-300">Cargar Ejemplo:</label>
+                <select id="exampleSelect" onchange="loadExample(this.value)" class="bg-slate-900 text-slate-100 text-xs font-medium rounded-md px-3 py-1.5 border border-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                    <option value="ex1">Ejemplo 1: Lanzamiento de Nuevo Producto</option>
+                    <option value="ex2">Ejemplo 2: Selección de Cultivo Agrícola</option>
+                    <option value="custom">Personalizado / En Blanco</option>
+                </select>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col gap-6">
+
+        <!-- Navigation Tabs -->
+        <div class="border-b border-slate-200 bg-white rounded-t-xl px-4 pt-2 shadow-sm flex overflow-x-auto custom-scrollbar gap-2 sm:gap-6">
+            <button onclick="switchTab('matrix')" id="tab-btn-matrix" class="tab-btn tab-active py-3 px-2 sm:px-4 text-sm font-medium flex items-center gap-2 whitespace-nowrap">
+                <i data-lucide="table" class="w-4 h-4"></i> Matriz y Probabilidades
+            </button>
+            <button onclick="switchTab('criteria')" id="tab-btn-criteria" class="tab-btn py-3 px-2 sm:px-4 text-sm font-medium flex items-center gap-2 text-slate-500 hover:text-slate-700 whitespace-nowrap">
+                <i data-lucide="calculator" class="w-4 h-4"></i> Criterios de Decisión
+            </button>
+            <button onclick="switchTab('regret')" id="tab-btn-regret" class="tab-btn py-3 px-2 sm:px-4 text-sm font-medium flex items-center gap-2 text-slate-500 hover:text-slate-700 whitespace-nowrap">
+                <i data-lucide="frown" class="w-4 h-4"></i> Matriz de Arrepentimiento
+            </button>
+            <button onclick="switchTab('filtering')" id="tab-btn-filtering" class="tab-btn py-3 px-2 sm:px-4 text-sm font-medium flex items-center gap-2 text-slate-500 hover:text-slate-700 whitespace-nowrap">
+                <i data-lucide="filter" class="w-4 h-4"></i> Filtrado por Etapas y Diagrama
+            </button>
+            <button onclick="switchTab('record')" id="tab-btn-record" class="tab-btn py-3 px-2 sm:px-4 text-sm font-medium flex items-center gap-2 text-slate-500 hover:text-slate-700 whitespace-nowrap">
+                <i data-lucide="code" class="w-4 h-4"></i> Registro IA
+            </button>
+        </div>
+
+        <!-- TAB CONTENT: MATRIX & INPUTS -->
+        <section id="tab-matrix" class="tab-content flex flex-col gap-6">
+            <!-- Controls & Matrix Card -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 pb-4 border-b border-slate-100">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                            Matriz de Pagos (Recompensas / Beneficios)
+                        </h2>
+                        <p class="text-xs text-slate-500">Ingrese las alternativas, los estados de la naturaleza y sus respectivos pagos monetarios.</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="addAlternative()" class="bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition">
+                            <i data-lucide="plus" class="w-3.5 h-3.5"></i> Agregar Alternativa
+                        </button>
+                        <button onclick="addState()" class="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition">
+                            <i data-lucide="plus" class="w-3.5 h-3.5"></i> Agregar Estado
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Matrix Table -->
+                <div class="overflow-x-auto custom-scrollbar border border-slate-200 rounded-lg">
+                    <table class="w-full text-sm text-left border-collapse">
+                        <thead id="matrixHead" class="bg-slate-100 text-slate-700 font-semibold text-xs uppercase border-b border-slate-200">
+                            <!-- Dynamic Header -->
+                        </thead>
+                        <tbody id="matrixBody" class="divide-y divide-slate-200 bg-white">
+                            <!-- Dynamic Matrix Rows -->
+                        </tbody>
+                        <tfoot id="matrixFoot" class="bg-slate-50 border-t-2 border-slate-200 font-medium">
+                            <!-- Dynamic Probabilities Row -->
+                        </tfoot>
+                    </table>
+                </div>
+
+                <!-- Probability Alert Banner -->
+                <div id="probAlert" class="mt-4 p-3 rounded-lg flex items-center justify-between text-xs transition">
+                    <!-- Dynamic Probability Sum Alert -->
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB CONTENT: DECISION CRITERIA -->
+        <section id="tab-criteria" class="tab-content hidden flex-col gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <!-- Maximax Card -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col justify-between hover:shadow-md transition">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="px-2.5 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-bold uppercase tracking-wide">Optimista</span>
+                            <i data-lucide="trending-up" class="w-5 h-5 text-amber-500"></i>
+                        </div>
+                        <h3 class="text-base font-bold text-slate-800">Criterio Maximax</h3>
+                        <p class="text-xs text-slate-500 mt-1">Selecciona la alternativa con el máximo de los valores máximos (Mejor escenario posible).</p>
+                        
+                        <div class="mt-4 p-3 bg-slate-50 rounded-lg border border-slate-100">
+                            <span class="text-xs font-semibold text-slate-500 block mb-1">Valor Máximo Obtenido:</span>
+                            <span id="maximax-value" class="text-xl font-bold text-slate-800">-</span>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100">
+                        <span class="text-xs text-slate-500 block font-medium">Alternativa(s) Recomendada(s):</span>
+                        <div id="maximax-rec" class="text-sm font-bold text-amber-700 mt-1">-</div>
+                    </div>
+                </div>
+
+                <!-- Maximin Card -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col justify-between hover:shadow-md transition">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="px-2.5 py-1 bg-indigo-100 text-indigo-800 rounded-full text-xs font-bold uppercase tracking-wide">Pesimista</span>
+                            <i data-lucide="shield" class="w-5 h-5 text-indigo-500"></i>
+                        </div>
+                        <h3 class="text-base font-bold text-slate-800">Criterio Maximin</h3>
+                        <p class="text-xs text-slate-500 mt-1">Selecciona la alternativa con el máximo de los valores mínimos (Protección contra el peor caso).</p>
+                        
+                        <div class="mt-4 p-3 bg-slate-50 rounded-lg border border-slate-100">
+                            <span class="text-xs font-semibold text-slate-500 block mb-1">Valor Mínimo Maximizado:</span>
+                            <span id="maximin-value" class="text-xl font-bold text-slate-800">-</span>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100">
+                        <span class="text-xs text-slate-500 block font-medium">Alternativa(s) Recomendada(s):</span>
+                        <div id="maximin-rec" class="text-sm font-bold text-indigo-700 mt-1">-</div>
+                    </div>
+                </div>
+
+                <!-- Minimax Regret Card -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col justify-between hover:shadow-md transition">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="px-2.5 py-1 bg-rose-100 text-rose-800 rounded-full text-xs font-bold uppercase tracking-wide">Arrepentimiento</span>
+                            <i data-lucide="alert-triangle" class="w-5 h-5 text-rose-500"></i>
+                        </div>
+                        <h3 class="text-base font-bold text-slate-800">Criterio Minimax Regret</h3>
+                        <p class="text-xs text-slate-500 mt-1">Minimiza la pérdida de oportunidad máxima (arrepentimiento máximo).</p>
+                        
+                        <div class="mt-4 p-3 bg-slate-50 rounded-lg border border-slate-100">
+                            <span class="text-xs font-semibold text-slate-500 block mb-1">Arrepentimiento Máximo Minimizado:</span>
+                            <span id="minimax-value" class="text-xl font-bold text-slate-800">-</span>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100">
+                        <span class="text-xs text-slate-500 block font-medium">Alternativa(s) Recomendada(s):</span>
+                        <div id="minimax-rec" class="text-sm font-bold text-rose-700 mt-1">-</div>
+                    </div>
+                </div>
+
+                <!-- EMV / Bayes Card -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col justify-between hover:shadow-md transition">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold uppercase tracking-wide">Probabilístico</span>
+                            <i data-lucide="calculator" class="w-5 h-5 text-emerald-500"></i>
+                        </div>
+                        <h3 class="text-base font-bold text-slate-800">Valor Monetario Esperado (EMV / Bayes)</h3>
+                        <p class="text-xs text-slate-500 mt-1">Suma ponderada de los pagos utilizando las probabilidades de cada estado.</p>
+                        
+                        <div class="mt-4 p-3 bg-slate-50 rounded-lg border border-slate-100">
+                            <span class="text-xs font-semibold text-slate-500 block mb-1">Mayor Valor Esperado:</span>
+                            <span id="emv-value" class="text-xl font-bold text-slate-800">-</span>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100">
+                        <span class="text-xs text-slate-500 block font-medium">Alternativa(s) Recomendada(s):</span>
+                        <div id="emv-rec" class="text-sm font-bold text-emerald-700 mt-1">-</div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Summary Table of All Criteria -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 mt-2">
+                <h3 class="text-base font-bold text-slate-800 mb-4">Resumen Comparativo de Alternativas</h3>
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-sm text-left border-collapse">
+                        <thead class="bg-slate-100 text-slate-700 text-xs uppercase border-b border-slate-200">
+                            <tr>
+                                <th class="p-3">Alternativa</th>
+                                <th class="p-3 text-center">Maximax (Máx)</th>
+                                <th class="p-3 text-center">Maximin (Mín)</th>
+                                <th class="p-3 text-center">Máx Arrepentimiento</th>
+                                <th class="p-3 text-center">EMV / Bayes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="summaryTableBody" class="divide-y divide-slate-200 text-xs">
+                            <!-- Dynamic Summary Content -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB CONTENT: REGRET MATRIX -->
+        <section id="tab-regret" class="tab-content hidden flex-col gap-6">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+                <div class="mb-4">
+                    <h2 class="text-lg font-bold text-slate-800">Matriz de Arrepentimiento (Pérdida de Oportunidad)</h2>
+                    <p class="text-xs text-slate-500">Calculada restando cada pago del valor máximo de su respectiva columna (estado de la naturaleza).</p>
+                </div>
+                
+                <div class="overflow-x-auto custom-scrollbar border border-slate-200 rounded-lg">
+                    <table class="w-full text-sm text-left border-collapse">
+                        <thead id="regretHead" class="bg-slate-100 text-slate-700 font-semibold text-xs uppercase border-b border-slate-200">
+                            <!-- Dynamic Regret Header -->
+                        </thead>
+                        <tbody id="regretBody" class="divide-y divide-slate-200 bg-white">
+                            <!-- Dynamic Regret Matrix Rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB CONTENT: STAGED FILTERING & FLOWCHART -->
+        <section id="tab-filtering" class="tab-content hidden flex-col gap-6">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 pb-4 border-b border-slate-100">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-800">Filtrado Secuencial por Etapas (Staged Filtering)</h2>
+                        <p class="text-xs text-slate-500">Configure una secuencia de criterios para eliminar alternativas gradualmente hasta encontrar la decisión óptima.</p>
+                    </div>
+                    <button onclick="addFilterStage()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i> Agregar Etapa de Filtro
+                    </button>
+                </div>
+
+                <!-- Stages Config List -->
+                <div id="stagesContainer" class="flex flex-col gap-3 mb-6">
+                    <!-- Dynamic Stage Controls -->
+                </div>
+
+                <div class="pt-4 border-t border-slate-200">
+                    <h3 class="text-base font-bold text-slate-800 mb-3 flex items-center gap-2">
+                        <i data-lucide="git-merge" class="w-5 h-5 text-blue-600"></i> Diagrama de Flujo del Filtrado
+                    </h3>
+                    
+                    <!-- Interactive Visual Flowchart -->
+                    <div id="flowchartCanvas" class="bg-slate-50 border border-slate-200 rounded-xl p-6 min-h-[300px] flex flex-col items-center justify-center gap-4 overflow-x-auto custom-scrollbar">
+                        <!-- Dynamic Flowchart DOM / SVG Rendering -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB CONTENT: AI DEVELOPMENT RECORD -->
+        <section id="tab-record" class="tab-content hidden flex-col gap-6">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="p-2 bg-purple-100 text-purple-700 rounded-lg">
+                        <i data-lucide="file-code" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-800">Registro de Desarrollo Asistido por IA</h2>
+                        <p class="text-xs text-slate-500">Requisito C10 - Transparencia de la interacción de diseño y desarrollo.</p>
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-4">
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        Esta aplicación fue diseñada, estructurada y programada de forma interactiva utilizando modelos de Lenguaje de Última Generación (LLM / IA Generativa) como parte de la práctica del Grado 10 Término 1 (C10 Practice).
+                    </p>
+                </div>
+
+                <div class="flex flex-col gap-3">
+                    <a href="https://github.com/nolopez338/global_economics" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-between p-3.5 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 font-medium hover:bg-blue-100 transition text-xs sm:text-sm">
+                        <span class="flex items-center gap-2">
+                            <i data-lucide="external-link" class="w-4 h-4"></i> Enlace al Repositorio del Proyecto y Registro IA
+                        </span>
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-4 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-500">
+            © Grade 10 Economics & Decision Making | C10 Interactive Decision Tool
+        </div>
+    </footer>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // Default Decision Model State
+        let stateData = {
+            alternatives: ["Producto A (Innovador)", "Producto B (Estándar)", "Producto C (Económico)"],
+            states: ["Demanda Alta", "Demanda Media", "Demanda Baja"],
+            probabilities: [0.30, 0.50, 0.20],
+            payoffs: [
+                [150, 80, -30],  // Alt 1
+                [100, 70, 10],   // Alt 2
+                [60, 50, 30]     // Alt 3
+            ],
+            // Filtering stages criteria list
+            filterStages: [
+                { id: 1, criterion: 'maximin', threshold: 0, enabled: true },
+                { id: 2, criterion: 'emv', threshold: 0, enabled: true }
+            ]
+        };
+
+        // Preloaded Examples Library
+        const preloadedExamples = {
+            ex1: {
+                alternatives: ["Producto A (Innovador)", "Producto B (Estándar)", "Producto C (Económico)"],
+                states: ["Demanda Alta", "Demanda Media", "Demanda Baja"],
+                probabilities: [0.30, 0.50, 0.20],
+                payoffs: [
+                    [150, 80, -30],
+                    [100, 70, 10],
+                    [60, 50, 30]
+                ],
+                filterStages: [
+                    { id: 1, criterion: 'maximin', threshold: 0, enabled: true },
+                    { id: 2, criterion: 'emv', threshold: 0, enabled: true }
+                ]
+            },
+            ex2: {
+                alternatives: ["Trigo (Resistente)", "Maíz (Rendimiento Alto)", "Soya (Equilibrado)"],
+                states: ["Lluvia Abundante", "Clima Normal", "Sequía Severa"],
+                probabilities: [0.25, 0.55, 0.20],
+                payoffs: [
+                    [120, 90, 40],
+                    [180, 80, -20],
+                    [140, 85, 10]
+                ],
+                filterStages: [
+                    { id: 1, criterion: 'minimax', threshold: 50, enabled: true },
+                    { id: 2, criterion: 'emv', threshold: 0, enabled: true }
+                ]
+            },
+            custom: {
+                alternatives: ["Alternativa 1", "Alternativa 2"],
+                states: ["Estado 1", "Estado 2"],
+                probabilities: [0.5, 0.5],
+                payoffs: [
+                    [100, 0],
+                    [50, 50]
+                ],
+                filterStages: [
+                    { id: 1, criterion: 'maximax', threshold: 0, enabled: true }
+                ]
+            }
+        };
+
+        // Tab Switching Logic
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('flex'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('tab-active');
+                btn.classList.add('text-slate-500');
+            });
+
+            const activeTab = document.getElementById(`tab-${tabId}`);
+            activeTab.classList.remove('hidden');
+            activeTab.classList.add('flex');
+
+            const activeBtn = document.getElementById(`tab-btn-${tabId}`);
+            activeBtn.classList.add('tab-active');
+            activeBtn.classList.remove('text-slate-500');
+
+            if (tabId === 'filtering') {
+                renderFlowchart();
+            }
+        }
+
+        // Load Preloaded Example
+        function loadExample(key) {
+            if (preloadedExamples[key]) {
+                // Deep copy
+                stateData = JSON.parse(JSON.stringify(preloadedExamples[key]));
+                renderAll();
+            }
+        }
+
+        // Matrix Structure Editing Functions
+        function addAlternative() {
+            const count = stateData.alternatives.length + 1;
+            stateData.alternatives.push(`Alternativa ${count}`);
+            const newRow = new Array(stateData.states.length).fill(0);
+            stateData.payoffs.push(newRow);
+            renderAll();
+        }
+
+        function removeAlternative(index) {
+            if (stateData.alternatives.length <= 1) return;
+            stateData.alternatives.splice(index, 1);
+            stateData.payoffs.splice(index, 1);
+            renderAll();
+        }
+
+        function addState() {
+            const count = stateData.states.length + 1;
+            stateData.states.push(`Estado ${count}`);
+            // Equalize probabilities
+            const newProb = 1 / stateData.states.length;
+            stateData.probabilities = new Array(stateData.states.length).fill(Number(newProb.toFixed(2)));
+            
+            // Adjust matrix columns
+            stateData.payoffs.forEach(row => row.push(0));
+            renderAll();
+        }
+
+        function removeState(index) {
+            if (stateData.states.length <= 1) return;
+            stateData.states.splice(index, 1);
+            stateData.probabilities.splice(index, 1);
+            stateData.payoffs.forEach(row => row.splice(index, 1));
+            renderAll();
+        }
+
+        function updatePayoff(altIdx, stateIdx, val) {
+            stateData.payoffs[altIdx][stateIdx] = parseFloat(val) || 0;
+            renderCalculations();
+        }
+
+        function updateProbability(stateIdx, val) {
+            stateData.probabilities[stateIdx] = parseFloat(val) || 0;
+            renderCalculations();
+        }
+
+        function updateAltName(idx, val) {
+            stateData.alternatives[idx] = val;
+            renderCalculations();
+        }
+
+        function updateStateName(idx, val) {
+            stateData.states[idx] = val;
+            renderCalculations();
+        }
+
+        // Core Mathematical Calculations
+        function calculateResults() {
+            const alts = stateData.alternatives;
+            const states = stateData.states;
+            const payoffs = stateData.payoffs;
+            const probs = stateData.probabilities;
+
+            // 1. Maximax & Maximin
+            const maximaxValues = payoffs.map(row => Math.max(...row));
+            const maximinValues = payoffs.map(row => Math.min(...row));
+
+            const globalMaximax = Math.max(...maximaxValues);
+            const globalMaximin = Math.max(...maximinValues);
+
+            const maximaxRecs = alts.filter((_, idx) => maximaxValues[idx] === globalMaximax);
+            const maximinRecs = alts.filter((_, idx) => maximinValues[idx] === globalMaximin);
+
+            // 2. Regret Matrix & Minimax Regret
+            // Maximum per column state
+            const colMax = states.map((_, colIdx) => Math.max(...payoffs.map(row => row[colIdx])));
+            
+            // Regret matrix calculation
+            const regretMatrix = payoffs.map(row => 
+                row.map((val, colIdx) => colMax[colIdx] - val)
+            );
+
+            const maxRegretValues = regretMatrix.map(row => Math.max(...row));
+            const globalMinimaxRegret = Math.min(...maxRegretValues);
+            const minimaxRecs = alts.filter((_, idx) => maxRegretValues[idx] === globalMinimaxRegret);
+
+            // 3. EMV / Bayes
+            const emvValues = payoffs.map(row => 
+                row.reduce((sum, val, colIdx) => sum + (val * (probs[colIdx] || 0)), 0)
+            );
+            const globalMaxEMV = Math.max(...emvValues);
+            const emvRecs = alts.filter((_, idx) => Math.abs(emvValues[idx] - globalMaxEMV) < 0.0001);
+
+            return {
+                maximaxValues, globalMaximax, maximaxRecs,
+                maximinValues, globalMaximin, maximinRecs,
+                regretMatrix, maxRegretValues, globalMinimaxRegret, minimaxRecs,
+                emvValues, globalMaxEMV, emvRecs
+            };
+        }
+
+        // Render Matrix Input Table
+        function renderMatrix() {
+            const head = document.getElementById('matrixHead');
+            const body = document.getElementById('matrixBody');
+            const foot = document.getElementById('matrixFoot');
+
+            // Header
+            let headHTML = `<tr>
+                <th class="p-3 border-b border-slate-200">Alternativas</th>`;
+            stateData.states.forEach((state, sIdx) => {
+                headHTML += `
+                <th class="p-2 border-b border-slate-200 min-w-[140px]">
+                    <div class="flex items-center justify-between gap-1">
+                        <input type="text" value="${state}" onchange="updateStateName(${sIdx}, this.value)" class="w-full bg-transparent font-semibold border-b border-transparent hover:border-slate-300 focus:border-blue-500 focus:bg-white px-1 py-0.5 outline-none rounded">
+                        <button onclick="removeState(${sIdx})" class="text-slate-400 hover:text-rose-600 transition p-1" title="Eliminar Estado">
+                            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+                </th>`;
+            });
+            headHTML += `<th class="p-3 border-b border-slate-200 text-center w-12">Acción</th></tr>`;
+            head.innerHTML = headHTML;
+
+            // Body
+            let bodyHTML = '';
+            stateData.alternatives.forEach((alt, aIdx) => {
+                bodyHTML += `<tr>
+                    <td class="p-2 font-medium text-slate-700 min-w-[180px]">
+                        <input type="text" value="${alt}" onchange="updateAltName(${aIdx}, this.value)" class="w-full bg-transparent border-b border-transparent hover:border-slate-300 focus:border-blue-500 focus:bg-white px-1.5 py-1 outline-none rounded text-xs font-semibold">
+                    </td>`;
+                stateData.states.forEach((_, sIdx) => {
+                    const val = stateData.payoffs[aIdx][sIdx];
+                    bodyHTML += `
+                    <td class="p-2">
+                        <input type="number" step="any" value="${val}" onchange="updatePayoff(${aIdx}, ${sIdx}, this.value)" class="w-full bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white rounded px-2 py-1 text-xs font-mono text-right outline-none">
+                    </td>`;
+                });
+                bodyHTML += `
+                <td class="p-2 text-center">
+                    <button onclick="removeAlternative(${aIdx})" class="text-slate-400 hover:text-rose-600 transition p-1" title="Eliminar Alternativa">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                </td>
+                </tr>`;
+            });
+            body.innerHTML = bodyHTML;
+
+            // Foot (Probabilities)
+            let footHTML = `<tr>
+                <td class="p-3 text-xs font-bold text-slate-600 uppercase">Probabilidad P(S<sub>j</sub>)</td>`;
+            stateData.states.forEach((_, sIdx) => {
+                const prob = stateData.probabilities[sIdx] !== undefined ? stateData.probabilities[sIdx] : 0;
+                footHTML += `
+                <td class="p-2">
+                    <input type="number" step="0.01" min="0" max="1" value="${prob}" onchange="updateProbability(${sIdx}, this.value)" class="w-full bg-blue-50 border border-blue-200 focus:border-blue-500 rounded px-2 py-1 text-xs font-mono font-bold text-blue-900 text-right outline-none">
+                </td>`;
+            });
+            footHTML += `<td class="p-3"></td></tr>`;
+            foot.innerHTML = footHTML;
+
+            lucide.createIcons();
+        }
+
+        // Render Decision Calculations and Summary
+        function renderCalculations() {
+            const results = calculateResults();
+
+            // Check probability sum
+            const probSum = stateData.probabilities.reduce((a, b) => a + b, 0);
+            const probAlert = document.getElementById('probAlert');
+            if (Math.abs(probSum - 1.0) > 0.01) {
+                probAlert.className = "mt-4 p-3 rounded-lg flex items-center justify-between text-xs bg-amber-50 border border-amber-200 text-amber-800";
+                probAlert.innerHTML = `<span class="flex items-center gap-1.5"><i data-lucide="alert-circle" class="w-4 h-4 text-amber-600"></i> Advertencia: La suma de probabilidades es ${probSum.toFixed(2)} (debe ser igual a 1.00 para EMV).</span>`;
+            } else {
+                probAlert.className = "mt-4 p-3 rounded-lg flex items-center justify-between text-xs bg-emerald-50 border border-emerald-200 text-emerald-800";
+                probAlert.innerHTML = `<span class="flex items-center gap-1.5"><i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i> Suma de probabilidades válida = 1.00</span>`;
+            }
+
+            // Maximax
+            document.getElementById('maximax-value').innerText = results.globalMaximax.toFixed(2);
+            document.getElementById('maximax-rec').innerText = results.maximaxRecs.join(', ');
+
+            // Maximin
+            document.getElementById('maximin-value').innerText = results.globalMaximin.toFixed(2);
+            document.getElementById('maximin-rec').innerText = results.maximinRecs.join(', ');
+
+            // Minimax Regret
+            document.getElementById('minimax-value').innerText = results.globalMinimaxRegret.toFixed(2);
+            document.getElementById('minimax-rec').innerText = results.minimaxRecs.join(', ');
+
+            // EMV
+            document.getElementById('emv-value').innerText = results.globalMaxEMV.toFixed(2);
+            document.getElementById('emv-rec').innerText = results.emvRecs.join(', ');
+
+            // Summary Table
+            const summaryBody = document.getElementById('summaryTableBody');
+            let summaryHTML = '';
+            stateData.alternatives.forEach((alt, idx) => {
+                summaryHTML += `
+                <tr class="hover:bg-slate-50">
+                    <td class="p-3 font-semibold text-slate-800">${alt}</td>
+                    <td class="p-3 text-center font-mono">${results.maximaxValues[idx].toFixed(2)}</td>
+                    <td class="p-3 text-center font-mono">${results.maximinValues[idx].toFixed(2)}</td>
+                    <td class="p-3 text-center font-mono">${results.maxRegretValues[idx].toFixed(2)}</td>
+                    <td class="p-3 text-center font-mono font-bold text-blue-700">${results.emvValues[idx].toFixed(2)}</td>
+                </tr>`;
+            });
+            summaryBody.innerHTML = summaryHTML;
+
+            // Regret Matrix Tab Render
+            renderRegretMatrix(results.regretMatrix);
+
+            // Update Flowchart if visible
+            renderFlowchart();
+
+            lucide.createIcons();
+        }
+
+        // Render Regret Matrix Tab
+        function renderRegretMatrix(regretMatrix) {
+            const head = document.getElementById('regretHead');
+            const body = document.getElementById('regretBody');
+
+            let headHTML = `<tr><th class="p-3">Alternativas</th>`;
+            stateData.states.forEach(st => {
+                headHTML += `<th class="p-3 text-center">${st}</th>`;
+            });
+            headHTML += `<th class="p-3 text-center bg-rose-50 text-rose-800">Arrepentimiento Máx</th></tr>`;
+            head.innerHTML = headHTML;
+
+            let bodyHTML = '';
+            stateData.alternatives.forEach((alt, aIdx) => {
+                const maxReg = Math.max(...regretMatrix[aIdx]);
+                bodyHTML += `<tr>
+                    <td class="p-3 font-medium text-slate-800">${alt}</td>`;
+                regretMatrix[aIdx].forEach(val => {
+                    bodyHTML += `<td class="p-3 text-center font-mono text-slate-600">${val.toFixed(2)}</td>`;
+                });
+                bodyHTML += `<td class="p-3 text-center font-mono font-bold text-rose-700 bg-rose-50/50">${maxReg.toFixed(2)}</td></tr>`;
+            });
+            body.innerHTML = bodyHTML;
+        }
+
+        // Staged Filtering Controls & Flowchart Logic
+        function addFilterStage() {
+            const newId = Date.now();
+            stateData.filterStages.push({
+                id: newId,
+                criterion: 'maximin',
+                threshold: 0,
+                enabled: true
+            });
+            renderFilterStages();
+            renderFlowchart();
+        }
+
+        function removeFilterStage(id) {
+            stateData.filterStages = stateData.filterStages.filter(s => s.id !== id);
+            renderFilterStages();
+            renderFlowchart();
+        }
+
+        function updateStage(id, key, val) {
+            const stage = stateData.filterStages.find(s => s.id === id);
+            if (stage) {
+                stage[key] = key === 'threshold' ? parseFloat(val) || 0 : val;
+                renderFlowchart();
+            }
+        }
+
+        function renderFilterStages() {
+            const container = document.getElementById('stagesContainer');
+            if (stateData.filterStages.length === 0) {
+                container.innerHTML = `<div class="p-4 text-center text-xs text-slate-400 bg-slate-50 rounded-lg border border-dashed">No hay etapas de filtro configuradas. Haga clic en "Agregar Etapa de Filtro".</div>`;
+                return;
+            }
+
+            let html = '';
+            stateData.filterStages.forEach((stage, sIdx) => {
+                html += `
+                <div class="flex flex-wrap items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                    <span class="w-6 h-6 flex items-center justify-center bg-blue-600 text-white font-bold rounded-full text-xs">${sIdx + 1}</span>
+                    <div class="flex-1 min-w-[160px]">
+                        <label class="text-[10px] uppercase font-bold text-slate-500 block">Criterio de Etapa</label>
+                        <select onchange="updateStage(${stage.id}, 'criterion', this.value)" class="w-full bg-white border border-slate-300 rounded px-2 py-1 text-xs font-medium">
+                            <option value="maximin" ${stage.criterion === 'maximin' ? 'selected' : ''}>Maximin (Conservador)</option>
+                            <option value="maximax" ${stage.criterion === 'maximax' ? 'selected' : ''}>Maximax (Optimista)</option>
+                            <option value="emv" ${stage.criterion === 'emv' ? 'selected' : ''}>EMV / Bayes (Esperado)</option>
+                            <option value="minimax" ${stage.criterion === 'minimax' ? 'selected' : ''}>Minimax Regret (Arrepentimiento)</option>
+                        </select>
+                    </div>
+                    <div class="w-32">
+                        <label class="text-[10px] uppercase font-bold text-slate-500 block">Umbral Mínimo</label>
+                        <input type="number" step="any" value="${stage.threshold}" onchange="updateStage(${stage.id}, 'threshold', this.value)" class="w-full bg-white border border-slate-300 rounded px-2 py-1 text-xs font-mono">
+                    </div>
+                    <button onclick="removeFilterStage(${stage.id})" class="mt-3 text-slate-400 hover:text-rose-600 transition p-1">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                </div>`;
+            });
+            container.innerHTML = html;
+            lucide.createIcons();
+        }
+
+        // Render Staged Flowchart
+        function renderFlowchart() {
+            const canvas = document.getElementById('flowchartCanvas');
+            const results = calculateResults();
+
+            let currentAlts = [...stateData.alternatives];
+            let flowchartSteps = [];
+
+            // Initial State
+            flowchartSteps.push({
+                title: "Inicio: Todas las Alternativas",
+                alts: [...currentAlts],
+                removed: []
+            });
+
+            // Execute sequential stages
+            stateData.filterStages.forEach((stage, idx) => {
+                if (!stage.enabled || currentAlts.length === 0) return;
+
+                let nextAlts = [];
+                let removedAlts = [];
+
+                currentAlts.forEach(alt => {
+                    const altIdx = stateData.alternatives.indexOf(alt);
+                    let val = 0;
+
+                    if (stage.criterion === 'maximin') val = results.maximinValues[altIdx];
+                    else if (stage.criterion === 'maximax') val = results.maximaxValues[altIdx];
+                    else if (stage.criterion === 'emv') val = results.emvValues[altIdx];
+                    else if (stage.criterion === 'minimax') val = results.maxRegretValues[altIdx];
+
+                    // Minimax regret passes if lower or equal to threshold, others if higher or equal
+                    let passes = stage.criterion === 'minimax' ? (val <= stage.threshold) : (val >= stage.threshold);
+
+                    if (passes) {
+                        nextAlts.push(alt);
+                    } else {
+                        removedAlts.push(`${alt} (${val.toFixed(1)})`);
+                    }
+                });
+
+                currentAlts = nextAlts;
+                flowchartSteps.push({
+                    title: `Etapa ${idx + 1}: ${stage.criterion.toUpperCase()} (Umbral ${stage.criterion === 'minimax' ? '≤' : '≥'} ${stage.threshold})`,
+                    alts: [...currentAlts],
+                    removed: removedAlts
+                });
+            });
+
+            // Flowchart Visual Builder HTML
+            let chartHTML = `<div class="flex flex-col items-center gap-3 w-full max-w-xl">`;
+
+            flowchartSteps.forEach((step, sIdx) => {
+                const isLast = sIdx === flowchartSteps.length - 1;
+
+                chartHTML += `
+                <div class="w-full bg-white border ${isLast ? 'border-emerald-300 ring-2 ring-emerald-100' : 'border-slate-200'} rounded-xl p-4 shadow-sm text-center transition">
+                    <div class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">${step.title}</div>
+                    <div class="flex flex-wrap gap-1.5 justify-center mt-2">`;
+                
+                if (step.alts.length === 0) {
+                    chartHTML += `<span class="px-2.5 py-1 bg-rose-100 text-rose-800 rounded-md text-xs font-semibold">Sin alternativas restantes</span>`;
+                } else {
+                    step.alts.forEach(a => {
+                        chartHTML += `<span class="px-2.5 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-md text-xs font-medium">${a}</span>`;
+                    });
+                }
+
+                chartHTML += `</div>`;
+
+                if (step.removed && step.removed.length > 0) {
+                    chartHTML += `<div class="text-[11px] text-rose-500 mt-2 font-medium">Eliminadas: ${step.removed.join(', ')}</div>`;
+                }
+
+                chartHTML += `</div>`;
+
+                if (!isLast) {
+                    chartHTML += `
+                    <div class="flex flex-col items-center">
+                        <i data-lucide="arrow-down" class="w-5 h-5 text-slate-400 my-1"></i>
+                    </div>`;
+                }
+            });
+
+            chartHTML += `</div>`;
+            canvas.innerHTML = chartHTML;
+            lucide.createIcons();
+        }
+
+        // Complete Render Pipeline
+        function renderAll() {
+            renderMatrix();
+            renderCalculations();
+            renderFilterStages();
+        }
+
+        // Initialize Application
+        window.onload = function() {
+            renderAll();
+        };
+    </script>
+</body>
+</html>
